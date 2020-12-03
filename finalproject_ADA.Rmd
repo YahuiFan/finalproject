@@ -1,0 +1,138 @@
+---
+title: "How can diabetesimpacted by	food insecurity "
+output: html_notebook
+---
+
+
+```{r}
+#install.packages("pacman") for logistic regression
+pacman::p_load(tidyverse, ROCR, odds.n.ends, blorr, lmtest, car) 
+
+#Import dataset
+NHANES<-read.csv("final.csv", stringsAsFactors=FALSE)
+```
+
+
+```{r}
+#check varibles
+class(NHANES$diabetes)
+class(NHANES$fdsec)
+class(NHANES$famp)
+class(NHANES$edu)
+class(NHANES$age)
+```
+
+#Recode dependant variable 
+
+```{r}
+#Recode diabetes variable 
+NHANES <- NHANES%>%
+  mutate(diabetes_binary =case_when(diabetes==0~0, diabetes==1~1),
+  diabetes_binary = factor(diabetes_binary, 0:1, c("No ", "Yes")))
+
+#check recode varibles
+class(NHANES$diabetes_binary)
+table(NHANES$diabetes_binary)
+table(NHANES$diabetes,NHANES$diabetes_binary)
+
+```
+
+# Recode 4 independnt variables
+
+```{r}
+#Recode food security  variable 
+#checkfdsec variable frequency
+table(NHANES$fdsec)
+NHANES <- NHANES%>%
+  mutate(fdsec_status =case_when(fdsec==0~0,fdsec==1~1,fdsec==2~2),
+ fdsec_status = factor(fdsec_status,0:2, c("food secure","slightly food insecure" ,"food insecure")))
+#check recode varibles
+class(NHANES$fdsec_status)
+table(NHANES$fdsec_status,NHANES$fdsec)
+
+```
+
+```{r}
+#recode family poverty index variable
+table(NHANES$famp)
+NHANES<-NHANES%>%
+ mutate(poverty_status=case_when(famp==0~0,famp==1~1,famp==2~2), poverty_status=factor(poverty_status,0:2,c("less than or equal to 1.30","more than 1.30 and less than or equal to 1.85", "more than 1.85" )))
+
+class(NHANES$poverty_status)
+table(NHANES$famp,NHANES$poverty_status)
+
+
+```
+
+```{r}
+
+#recode education level variable
+table(NHANES$edu)
+
+NHANES<-NHANES%>%
+ mutate(edu_level=
+          case_when(edu==0~0,edu==1~1,edu==2~2,edu==3~3),edu_level=factor(edu_level,0:3,c("less than 9th grade ", "high school GRAD/GED or equivalent","some college or AA degree","college graduate or above" )))
+
+class(NHANES$edu_level)
+table(NHANES$edu,NHANES$edu_level)
+
+
+```
+
+```{r}
+
+#Recode age variable 
+table(NHANES$age)
+
+NHANES<-NHANES%>%
+ mutate(age_cat=
+          case_when(age==0~0,age==1~1,age==2~2,age==3~3), age_cat=factor(age_cat,0:3,c("20-29 years old ","30-39 years old","40-49 years old"," 50-59 years old"  )))
+
+class(NHANES$age_cat)
+table(NHANES$age,NHANES$age_cat)
+```
+
+
+## conduct logistic regression for food security  
+
+```{r}
+#Multivariate model with diabetes as the dependent variable and food security as the independent variables
+fdsec_status_Logit<- glm(diabetes_binary~ fdsec_status+age_cat+edu_level+poverty_status,data=NHANES, family="binomial")
+summary(fdsec_status_Logit)
+
+#calculate and print ORs and 95% CIs  
+ORmodel<-exp(cbind(OR = coef(fdsec_status_Logit), confint(fdsec_status_Logit))) #calculate ORs and 95% CIs
+ORmodel #print ORs and 95% CIs
+
+
+```
+
+## assumptions test 
+```{r}
+#linearity
+str(NHANES)
+#For food security variable is a categorical variable, we do not need to test the linearity
+
+#Influence plot 
+plot(fdsec_status_Logit, which=4, id.n=5, col="PINK")
+# According to the plot, all top 5 cook distance values are below 0.2, thus we do not need to exclude outliers.
+
+#Multicollinearity
+
+#For all four independent variables are categorical variables, so we do not need check multicollinearity
+
+#Various pseudo R squares, log likelihood, deviance, AIC, BIC
+blr_model_fit_stats(fdsec_status_Logit)
+
+#Hosmer lemeshow goodness of fit test
+
+blr_test_hosmer_lemeshow(fdsec_status_Logit)
+
+#According to the Hosmer lemeshow test, p values is over 0.05, which is not significant which indicated that our model has a good fit.
+```
+
+
+
+
+
+
