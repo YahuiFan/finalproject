@@ -6,10 +6,10 @@ output: html_notebook
 
 ```{r}
 #install.packages("pacman") for logistic regression
-pacman::p_load(tidyverse, ROCR, odds.n.ends, blorr, lmtest, car) 
+pacman::p_load(tidyverse, ROCR, odds.n.ends, blorr, lmtest, car, table1) 
 
 #Import dataset
-NHANES<-read.csv("final.csv", stringsAsFactors=FALSE)
+NHANES<-read.csv("https://raw.githubusercontent.com/YahuiFan/finalproject/master/final.csv", stringsAsFactors=FALSE)
 ```
 
 
@@ -45,7 +45,7 @@ table(NHANES$diabetes,NHANES$diabetes_binary)
 table(NHANES$fdsec)
 NHANES <- NHANES%>%
   mutate(fdsec_status =case_when(fdsec==0~0,fdsec==1~1,fdsec==2~2),
- fdsec_status = factor(fdsec_status,0:2, c("food secure","slightly food insecure" ,"food insecure")))
+ fdsec_status = factor(fdsec_status,0:2, c("Food Secure","Slightly Food Insecure" ,"Food Insecure")))
 #check recode varibles
 class(NHANES$fdsec_status)
 table(NHANES$fdsec_status,NHANES$fdsec)
@@ -56,7 +56,7 @@ table(NHANES$fdsec_status,NHANES$fdsec)
 #recode family poverty index variable
 table(NHANES$famp)
 NHANES<-NHANES%>%
- mutate(poverty_status=case_when(famp==0~0,famp==1~1,famp==2~2), poverty_status=factor(poverty_status,0:2,c("less than or equal to 1.30","more than 1.30 and less than or equal to 1.85", "more than 1.85" )))
+ mutate(poverty_status=case_when(famp==0~0,famp==1~1,famp==2~2), poverty_status=factor(poverty_status,0:2,c("Less than or Equal to 1.30","More Than 1.30 and Less Than and Equal to 1.85", "More Than or Equal to 1.85" )))
 
 class(NHANES$poverty_status)
 table(NHANES$famp,NHANES$poverty_status)
@@ -71,7 +71,7 @@ table(NHANES$edu)
 
 NHANES<-NHANES%>%
  mutate(edu_level=
-          case_when(edu==0~0,edu==1~1,edu==2~2,edu==3~3),edu_level=factor(edu_level,0:3,c("less than 9th grade ", "high school GRAD/GED or equivalent","some college or AA degree","college graduate or above" )))
+          case_when(edu==0~0,edu==1~1,edu==2~2,edu==3~3),edu_level=factor(edu_level,0:3,c("Less Than 9th Grade ", "High School GRAD/GED or Equivalent","Some College or AA Degree","College Graduate or Above" )))
 
 class(NHANES$edu_level)
 table(NHANES$edu,NHANES$edu_level)
@@ -86,7 +86,7 @@ table(NHANES$age)
 
 NHANES<-NHANES%>%
  mutate(age_cat=
-          case_when(age==0~0,age==1~1,age==2~2,age==3~3), age_cat=factor(age_cat,0:3,c("20-29 years old ","30-39 years old","40-49 years old"," 50-59 years old"  )))
+          case_when(age==0~0,age==1~1,age==2~2,age==3~3), age_cat=factor(age_cat,0:3,c("20-29","30-39","40-49"," 50-59"  )))
 
 class(NHANES$age_cat)
 table(NHANES$age,NHANES$age_cat)
@@ -131,7 +131,16 @@ blr_test_hosmer_lemeshow(fdsec_status_Logit)
 #According to the Hosmer lemeshow test, p values is over 0.05, which is not significant which indicated that our model has a good fit.
 ```
 
+##table 1 function
+```{r}
+label(NHANES$diabetes_binary)<-"Diabetes"
+label(NHANES$age_cat)<-"Age at Screening (Years)"
+label(NHANES$edu_level)<-"Educational Level"
+label(NHANES$poverty_status)<-"Family Monthly Poverty Level"
+label(NHANES$fdsec_status)<-"Food Security Status"
 
+table1(~age_cat + edu_level + poverty_status + diabetes_binary | fdsec_status, overall="Total", rowlabelhead = "Variable", NHANES)
+```
 
 
 
